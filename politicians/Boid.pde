@@ -9,9 +9,17 @@ public class Boid {
     private float r;
     private color c;
 
-    private IDesireCalc desireCalc;
+    private IDesireCalculator desireCalc;
+    private IBorderCalculator borderCalculator;
 
-    public Boid(float x, float y, color c, float maxspeed, float maxforce, IDesireCalc desireCalc) {
+    public Boid(
+            float x,
+            float y,
+            color c,
+            float maxspeed,
+            float maxforce,
+            IDesireCalculator desireCalc,
+            IBorderCalculator borderCalculator) {
         this.acceleration = new PVector(0, 0);
 
         float angle = random(TWO_PI);
@@ -25,15 +33,19 @@ public class Boid {
         this.c = c;
 
         this.desireCalc = desireCalc;
+        this.borderCalculator = borderCalculator;
     }
 
     public void run() {
+        // Reset acceleration to 0 each cycle
+        this.acceleration.mult(0);
+        
         // Apply desired calc
         PVector desiredForce = this.desireCalc.calculateDesired(this);
         this.acceleration.add(desiredForce);
 
         this.update();
-        this.borders();
+        this.borderCalculator.calculateBorders(this, this.r);
         this.render();
     }   
 
@@ -44,24 +56,6 @@ public class Boid {
         // Limit speed
         this.velocity.limit(this.maxspeed);
         this.position.add(this.velocity);
-        // Reset acceleration to 0 each cycle
-        this.acceleration.mult(0);
-    }
-
-    // Wraparound
-    private void bordersWrap() {
-        if (this.position.x < -r) this.position.x = width+r;
-        if (this.position.y < -r) this.position.y = height+r;
-        if (this.position.x > width+r) this.position.x = -r;
-        if (this.position.y > height+r) this.position.y = -r;
-    }
-
-    // Wraparound
-    private void borders() {
-        if (this.position.x < -r) this.position.x = width+r;
-        if (this.position.y < -r) this.position.y = height+r;
-        if (this.position.x > width+r) this.position.x = -r;
-        if (this.position.y > height+r) this.position.y = -r;
     }
 
     private void render() {

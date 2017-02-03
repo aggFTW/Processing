@@ -1,8 +1,10 @@
 Flock democrats;
 Flock republicans;
 
-IDesireCalc democratsDesiredCalculator;
-IDesireCalc republicansDesiredCalculator;
+IDesireCalculator democratsDesiredCalculator;
+IDesireCalculator republicansDesiredCalculator;
+
+IBorderCalculator borderCalculator;
 
 void setup() {
     size(1024, 800);
@@ -14,6 +16,8 @@ void setup() {
     democratsDesiredCalculator = new SimpleDesireCalc(democrats);
     republicansDesiredCalculator = new SimpleDesireCalc(republicans);
 
+    borderCalculator = new BounceBorderCalculator();
+
     for (int i = 0; i < 150; i++) {
         democrats.addBoid(
             new Boid(width/2,
@@ -21,14 +25,16 @@ void setup() {
                     color(0, 0, 255),
                     2,
                     0.03,
-                    democratsDesiredCalculator));
+                    democratsDesiredCalculator,
+                    borderCalculator));
         republicans.addBoid(
             new Boid(width/2,
                     height/2,
                     color(255, 0, 0),
                     2,
                     0.03,
-                    republicansDesiredCalculator));
+                    republicansDesiredCalculator,
+                    borderCalculator));
     }
 }
 

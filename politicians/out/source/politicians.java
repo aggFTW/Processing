@@ -17,8 +17,10 @@ public class politicians extends PApplet {
 Flock democrats;
 Flock republicans;
 
-IDesireCalc democratsDesiredCalculator;
-IDesireCalc republicansDesiredCalculator;
+IDesireCalculator democratsDesiredCalculator;
+IDesireCalculator republicansDesiredCalculator;
+
+IBorderCalculator borderCalculator;
 
 public void setup() {
     
@@ -30,6 +32,8 @@ public void setup() {
     democratsDesiredCalculator = new SimpleDesireCalc(democrats);
     republicansDesiredCalculator = new SimpleDesireCalc(republicans);
 
+    borderCalculator = new BounceBorderCalculator();
+
     for (int i = 0; i < 150; i++) {
         democrats.addBoid(
             new Boid(width/2,
@@ -37,14 +41,16 @@ public void setup() {
                     color(0, 0, 255),
                     2,
                     0.03f,
-                    democratsDesiredCalculator));
+                    democratsDesiredCalculator,
+                    borderCalculator));
         republicans.addBoid(
             new Boid(width/2,
                     height/2,
                     color(255, 0, 0),
                     2,
                     0.03f,
-                    republicansDesiredCalculator));
+                    republicansDesiredCalculator,
+                    borderCalculator));
     }
 }
 
@@ -64,9 +70,17 @@ public class Boid {
     private float r;
     private int c;
 
-    private IDesireCalc desireCalc;
+    private IDesireCalculator desireCalc;
+    private IBorderCalculator borderCalculator;
 
-    public Boid(float x, float y, int c, float maxspeed, float maxforce, IDesireCalc desireCalc) {
+    public Boid(
+            float x,
+            float y,
+            int c,
+            float maxspeed,
+            float maxforce,
+            IDesireCalculator desireCalc,
+            IBorderCalculator borderCalculator) {
         this.acceleration = new PVector(0, 0);
 
         float angle = random(TWO_PI);
@@ -80,15 +94,19 @@ public class Boid {
         this.c = c;
 
         this.desireCalc = desireCalc;
+        this.borderCalculator = borderCalculator;
     }
 
     public void run() {
+        // Reset acceleration to 0 each cycle
+        this.acceleration.mult(0);
+        
         // Apply desired calc
         PVector desiredForce = this.desireCalc.calculateDesired(this);
         this.acceleration.add(desiredForce);
 
         this.update();
-        this.borders();
+        this.borderCalculator.calculateBorders(this, this.r);
         this.render();
     }   
 
@@ -99,24 +117,6 @@ public class Boid {
         // Limit speed
         this.velocity.limit(this.maxspeed);
         this.position.add(this.velocity);
-        // Reset acceleration to 0 each cycle
-        this.acceleration.mult(0);
-    }
-
-    // Wraparound
-    private void bordersWrap() {
-        if (this.position.x < -r) this.position.x = width+r;
-        if (this.position.y < -r) this.position.y = height+r;
-        if (this.position.x > width+r) this.position.x = -r;
-        if (this.position.y > height+r) this.position.y = -r;
-    }
-
-    // Wraparound
-    private void borders() {
-        if (this.position.x < -r) this.position.x = width+r;
-        if (this.position.y < -r) this.position.y = height+r;
-        if (this.position.x > width+r) this.position.x = -r;
-        if (this.position.y > height+r) this.position.y = -r;
     }
 
     private void render() {
@@ -139,6 +139,14 @@ public class Boid {
         popMatrix();
     }
 }
+class BounceBorderCalculator implements IBorderCalculator {
+    public void calculateBorders(Boid self, float r) {
+        if (self.position.x < -r || self.position.x > width+r)
+            self.velocity.x = -self.velocity.x;
+        if (self.position.y < -r || self.position.y > height+r)
+            self.velocity.y = -self.velocity.y;
+    }
+}
 public class Flock {
     ArrayList<Boid> boids;
 
@@ -156,10 +164,13 @@ public class Flock {
         this.boids.add(b);
     }
 }
-interface IDesireCalc {
+interface IBorderCalculator {
+    public void calculateBorders(Boid self, float r);
+}
+interface IDesireCalculator {
     public PVector calculateDesired(Boid self);
 }
-class SimpleDesireCalc implements IDesireCalc {
+class SimpleDesireCalc implements IDesireCalculator {
     private ArrayList<Boid> boids;
 
     public SimpleDesireCalc(Flock family) {
@@ -189,7 +200,7 @@ class SimpleDesireCalc implements IDesireCalc {
     // Separation
     // Method checks for nearby boids and steers away
     private PVector separate (Boid self, ArrayList<Boid> boids) {
-        float desiredseparation = 25.0f;
+        float desiredseparation = 15.0f;
         PVector steer = new PVector(0, 0, 0);
         int count = 0;
 
@@ -297,6 +308,14 @@ class SimpleDesireCalc implements IDesireCalc {
         PVector steer = PVector.sub(desired, self.velocity);
         steer.limit(self.maxforce);  // Limit to maximum steering force
         return steer;
+    }
+}
+class WrapAroundBorderCalculator implements IBorderCalculator {
+    public void calculateBorders(Boid self, float r) {
+        if (self.position.x < -r) self.position.x = width+r;
+        if (self.position.y < -r) self.position.y = height+r;
+        if (self.position.x > width+r) self.position.x = -r;
+        if (self.position.y > height+r) self.position.y = -r;
     }
 }
   public void settings() {  size(1024, 800); }

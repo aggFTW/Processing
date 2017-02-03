@@ -1,4 +1,4 @@
-class SimpleDesireCalc implements IDesireCalc {
+class SimpleDesireCalc implements IDesireCalculator {
     private ArrayList<Boid> boids;
 
     public SimpleDesireCalc(Flock family) {
@@ -28,7 +28,7 @@ class SimpleDesireCalc implements IDesireCalc {
     // Separation
     // Method checks for nearby boids and steers away
     private PVector separate (Boid self, ArrayList<Boid> boids) {
-        float desiredseparation = 25.0f;
+        float desiredseparation = 15.0f;
         PVector steer = new PVector(0, 0, 0);
         int count = 0;
 
