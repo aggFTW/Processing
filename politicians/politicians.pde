@@ -7,14 +7,16 @@ IDesireCalculator republicansDesiredCalculator;
 IBorderCalculator borderCalculator;
 
 void setup() {
-    size(1024, 800);
+    size(600, 600);
     
     // Add an initial set of boids into the system
     democrats = new Flock();
     republicans = new Flock();
 
-    democratsDesiredCalculator = new SimpleDesireCalc(democrats);
-    republicansDesiredCalculator = new SimpleDesireCalc(republicans);
+    // democratsDesiredCalculator = new SimpleDesireCalc(democrats);
+    // republicansDesiredCalculator = new SimpleDesireCalc(republicans);
+    democratsDesiredCalculator = new UsVsThemDesireCalc(democrats, republicans);
+    republicansDesiredCalculator = new UsVsThemDesireCalc(republicans, democrats);
 
     borderCalculator = new BounceBorderCalculator();
 

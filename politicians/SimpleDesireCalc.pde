@@ -6,11 +6,15 @@ class SimpleDesireCalc implements IDesireCalculator {
     }
 
     public PVector calculateDesired(Boid self) {
+        return calculateDesiredWithBoids(self, this.boids);
+    }
+
+    protected PVector calculateDesiredWithBoids(Boid self, ArrayList<Boid> boids) {
         PVector desiredForce = new PVector(0, 0);
 
-        PVector sep = this.separate(self, this.boids);   // Separation
-        PVector ali = this.align(self, this.boids);      // Alignment
-        PVector coh = this.cohesion(self, this.boids);   // Cohesion
+        PVector sep = this.separate(self, boids);   // Separation
+        PVector ali = this.align(self, boids);      // Alignment
+        PVector coh = this.cohesion(self, boids);   // Cohesion
 
         // Arbitrarily weight these forces
         sep.mult(1.5);

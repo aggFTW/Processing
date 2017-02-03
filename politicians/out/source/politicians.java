@@ -29,8 +29,10 @@ public void setup() {
     democrats = new Flock();
     republicans = new Flock();
 
-    democratsDesiredCalculator = new SimpleDesireCalc(democrats);
-    republicansDesiredCalculator = new SimpleDesireCalc(republicans);
+    // democratsDesiredCalculator = new SimpleDesireCalc(democrats);
+    // republicansDesiredCalculator = new SimpleDesireCalc(republicans);
+    democratsDesiredCalculator = new UsVsThemDesireCalc(democrats, republicans);
+    republicansDesiredCalculator = new UsVsThemDesireCalc(republicans, democrats);
 
     borderCalculator = new BounceBorderCalculator();
 
@@ -178,11 +180,15 @@ class SimpleDesireCalc implements IDesireCalculator {
     }
 
     public PVector calculateDesired(Boid self) {
+        return calculateDesiredWithBoids(self, this.boids);
+    }
+
+    protected PVector calculateDesiredWithBoids(Boid self, ArrayList<Boid> boids) {
         PVector desiredForce = new PVector(0, 0);
 
-        PVector sep = this.separate(self, this.boids);   // Separation
-        PVector ali = this.align(self, this.boids);      // Alignment
-        PVector coh = this.cohesion(self, this.boids);   // Cohesion
+        PVector sep = this.separate(self, boids);   // Separation
+        PVector ali = this.align(self, boids);      // Alignment
+        PVector coh = this.cohesion(self, boids);   // Cohesion
 
         // Arbitrarily weight these forces
         sep.mult(1.5f);
@@ -310,6 +316,25 @@ class SimpleDesireCalc implements IDesireCalculator {
         return steer;
     }
 }
+class UsVsThemDesireCalc extends SimpleDesireCalc {
+    private ArrayList<Boid> relatives;
+    private ArrayList<Boid> adversaries;
+
+    public UsVsThemDesireCalc(Flock family, Flock adversaries) {
+        super(family);
+        
+        this.relatives = family.boids;
+        this.adversaries = adversaries.boids;
+    }
+
+    public PVector calculateDesired(Boid self) {
+        PVector desiredForce = new PVector(0, 0);
+        PVector familyForce = calculateDesiredWithBoids(self, relatives);
+        PVector adversaryForce = calculateDesiredWithBoids(self, adversaries);
+
+        return desiredForce.add(familyForce).sub(adversaryForce);
+    }
+}
 class WrapAroundBorderCalculator implements IBorderCalculator {
     public void calculateBorders(Boid self, float r) {
         if (self.position.x < -r) self.position.x = width+r;
@@ -318,7 +343,7 @@ class WrapAroundBorderCalculator implements IBorderCalculator {
         if (self.position.y > height+r) self.position.y = -r;
     }
 }
-  public void settings() {  size(1024, 800); }
+  public void settings() {  size(600, 600); }
   static public void main(String[] passedArgs) {
     String[] appletArgs = new String[] { "politicians" };
     if (passedArgs != null) {
