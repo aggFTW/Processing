@@ -7,7 +7,7 @@ IDesireCalculator republicansDesiredCalculator;
 IBorderCalculator borderCalculator;
 
 void setup() {
-    size(600, 600);
+    size(200, 200);
     
     // Add an initial set of boids into the system
     democrats = new Flock();
@@ -20,21 +20,24 @@ void setup() {
 
     borderCalculator = new BounceBorderCalculator();
 
+    float maxspeed = 2;
+    float maxforce = 0.05;
+
     for (int i = 0; i < 150; i++) {
         democrats.addBoid(
             new Boid(width/2,
                     height/2,
                     color(0, 0, 255),
-                    2,
-                    0.03,
+                    maxspeed,
+                    maxforce,
                     democratsDesiredCalculator,
                     borderCalculator));
         republicans.addBoid(
             new Boid(width/2,
                     height/2,
                     color(255, 0, 0),
-                    2,
-                    0.03,
+                    maxspeed,
+                    maxforce,
                     republicansDesiredCalculator,
                     borderCalculator));
     }

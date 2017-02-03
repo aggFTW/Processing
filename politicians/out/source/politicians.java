@@ -36,21 +36,24 @@ public void setup() {
 
     borderCalculator = new BounceBorderCalculator();
 
+    float maxspeed = 2;
+    float maxforce = 0.05f;
+
     for (int i = 0; i < 150; i++) {
         democrats.addBoid(
             new Boid(width/2,
                     height/2,
                     color(0, 0, 255),
-                    2,
-                    0.03f,
+                    maxspeed,
+                    maxforce,
                     democratsDesiredCalculator,
                     borderCalculator));
         republicans.addBoid(
             new Boid(width/2,
                     height/2,
                     color(255, 0, 0),
-                    2,
-                    0.03f,
+                    maxspeed,
+                    maxforce,
                     republicansDesiredCalculator,
                     borderCalculator));
     }
@@ -343,7 +346,7 @@ class WrapAroundBorderCalculator implements IBorderCalculator {
         if (self.position.y > height+r) self.position.y = -r;
     }
 }
-  public void settings() {  size(600, 600); }
+  public void settings() {  size(200, 200); }
   static public void main(String[] passedArgs) {
     String[] appletArgs = new String[] { "politicians" };
     if (passedArgs != null) {
