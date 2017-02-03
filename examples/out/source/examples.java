@@ -136,7 +136,7 @@ public class Boid {
         stroke(255);
         pushMatrix();
         {
-            translate(position.x, position.y);
+            translate(this.position.x, this.position.y);
             rotate(theta);
             beginShape(TRIANGLES);
             vertex(0, -r*2);

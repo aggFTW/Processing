@@ -72,13 +72,13 @@ public class Boid {
         this.render();
     }
 
-    void applyForce(PVector force) {
+    private void applyForce(PVector force) {
         // We could add mass here if we want A = F / M
         this.acceleration.add(force);
     }
 
     // We accumulate a new acceleration each time based on three rules
-    void flock(ArrayList<Boid> boids) {
+    private void flock(ArrayList<Boid> boids) {
         PVector sep = this.separate(boids);   // Separation
         PVector ali = this.align(boids);      // Alignment
         PVector coh = this.cohesion(boids);   // Cohesion

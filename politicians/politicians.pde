@@ -8,15 +8,15 @@ void setup() {
     democrats = new Flock();
     republicans = new Flock();
     for (int i = 0; i < 150; i++) {
-        democrats.addBoid(new Boid(width/2,height/2, color(0, 0, 255)));
-        republicans.addBoid(new Boid(width/2,height/2, color(255, 0, 0)));
+        democrats.addBoid(new Boid(width/2, height/2, color(0, 0, 255)));
+        republicans.addBoid(new Boid(width/2, height/2, color(255, 0, 0)));
     }
 }
 
 void draw() {
     background(50);
     democrats.run(republicans);
-    //republicans.run(democrats);
+    republicans.run(democrats);
 }
 
 // Add a new boid into the System
@@ -26,7 +26,7 @@ void draw() {
 
 // The Flock (a list of Boid objects)
 public class Flock {
-    public ArrayList<Boid> boids;
+    ArrayList<Boid> boids;
 
     public Flock() {
         this.boids = new ArrayList<Boid>();
@@ -73,42 +73,34 @@ public class Boid {
         this.c = c;
     }
 
-    public void run(ArrayList<Boid> friends, ArrayList<Boid> adversaries) {
-        PVector friendlyAcceleration = this.flock(friends);
-        PVector adversaryAcceleration = this.flock(adversaries).mult(-1.0);
-
-        // this.acceleration.add(friendlyAcceleration);
-        this.acceleration.add(adversaryAcceleration);
-
+    public void run(ArrayList<Boid> boids, ArrayList<Boid> adversaries) {
+        PVector friendlyForce = this.flock(boids);
+        PVector adversaryForce = this.flock(adversaries);
+        this.acceleration.add(friendlyForce);
+        this.acceleration.sub(adversaryForce);
         this.update();
         this.borders();
         this.render();
     }
 
-    private void applyForce(PVector force) {
-        // We could add mass here if we want A = F / M
-        this.acceleration.add(force);
-    }
-
     // We accumulate a new acceleration each time based on three rules
     private PVector flock(ArrayList<Boid> boids) {
-        PVector resultingAcceleration = new PVector(0, 0);
-        
+        PVector res = new PVector(0, 0);
+
         PVector sep = this.separate(boids);   // Separation
         PVector ali = this.align(boids);      // Alignment
         PVector coh = this.cohesion(boids);   // Cohesion
-        
         // Arbitrarily weight these forces
         sep.mult(1.5);
         ali.mult(1.0);
         coh.mult(1.0);
 
-        // Add the force vectors to acceleration
-        resultingAcceleration.add(sep);
-        resultingAcceleration.add(sep);
-        resultingAcceleration.add(sep);
+        // Add the force vectors to return
+        res.add(sep);
+        res.add(ali);
+        res.add(coh);
 
-        return resultingAcceleration;
+        return res;
     }
 
     // Method to update position
