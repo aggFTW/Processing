@@ -31,26 +31,38 @@ public void setup() {
 
     // democratsDesiredCalculator = new SimpleDesireCalc(democrats);
     // republicansDesiredCalculator = new SimpleDesireCalc(republicans);
-    democratsDesiredCalculator = new UsVsThemDesireCalc(democrats, republicans);
-    republicansDesiredCalculator = new UsVsThemDesireCalc(republicans, democrats);
+
+    // democratsDesiredCalculator = new UsVsThemDesireCalc(democrats, republicans);
+    // republicansDesiredCalculator = new UsVsThemDesireCalc(republicans, democrats);
+
+    float desiredX = width / 2;
+    float desiredY = height / 2;
+    democratsDesiredCalculator = new UsVsThemDesireCalcGoCenter(democrats, republicans, desiredX, desiredY);
+    republicansDesiredCalculator = new UsVsThemDesireCalcGoCenter(republicans, democrats, desiredX, desiredY);
 
     borderCalculator = new BounceBorderCalculator();
 
     float maxspeed = 2;
-    float maxforce = 0.05f;
+    float maxforce = 0.55f;
+
+    float demX = 10;
+    float demY = 10;
+
+    float repX = width - demX;
+    float repY = height - demY;
 
     for (int i = 0; i < 150; i++) {
         democrats.addBoid(
-            new Boid(width/2,
-                    height/2,
+            new Boid(demX,
+                    demY,
                     color(0, 0, 255),
                     maxspeed,
                     maxforce,
                     democratsDesiredCalculator,
                     borderCalculator));
         republicans.addBoid(
-            new Boid(width/2,
-                    height/2,
+            new Boid(repX,
+                    repY,
                     color(255, 0, 0),
                     maxspeed,
                     maxforce,
@@ -61,8 +73,22 @@ public void setup() {
 
 public void draw() {
     background(50);
+
+    whiteHouse();
+
     democrats.run();
     republicans.run();
+}
+
+public void whiteHouse() {
+    stroke(255);
+    fill(50);
+    float whiteHouseSize = 100;
+    ellipse(width/2, height/2, whiteHouseSize, whiteHouseSize);
+    
+    fill(255);
+    textAlign(CENTER, CENTER);
+    text("White House", width/2, height/2);
 }
 public class Boid {
     public PVector position;
@@ -190,8 +216,8 @@ class SimpleDesireCalc implements IDesireCalculator {
         PVector desiredForce = new PVector(0, 0);
 
         PVector sep = this.separate(self, boids);   // Separation
-        PVector ali = this.align(self, boids);      // Alignment
-        PVector coh = this.cohesion(self, boids);   // Cohesion
+        PVector ali = this.align(self, boids, 50);      // Alignment
+        PVector coh = this.cohesion(self, boids, 50);   // Cohesion
 
         // Arbitrarily weight these forces
         sep.mult(1.5f);
@@ -204,6 +230,20 @@ class SimpleDesireCalc implements IDesireCalculator {
         desiredForce.add(coh);
 
         return desiredForce;
+    }
+
+    // A method that calculates and applies a steering force towards a target
+    // STEER = DESIRED MINUS VELOCITY
+    protected PVector seek(Boid self, PVector target) {
+        PVector desired = PVector.sub(target, self.position);  // A vector pointing from the position to the target
+        // Scale to maximum speed
+        desired.normalize();
+        desired.mult(self.maxspeed);
+
+        // Steering = Desired minus Velocity
+        PVector steer = PVector.sub(desired, self.velocity);
+        steer.limit(self.maxforce);  // Limit to maximum steering force
+        return steer;
     }
 
     // Separation
@@ -250,8 +290,7 @@ class SimpleDesireCalc implements IDesireCalculator {
 
     // Alignment
     // For every nearby boid in the system, calculate the average velocity
-    private PVector align (Boid self, ArrayList<Boid> boids) {
-        float neighbordist = 50;
+    private PVector align (Boid self, ArrayList<Boid> boids, float neighbordist) {
         PVector sum = new PVector(0, 0);
         int count = 0;
 
@@ -283,8 +322,7 @@ class SimpleDesireCalc implements IDesireCalculator {
 
     // Cohesion
     // For the average position (i.e. center) of all nearby boids, calculate steering vector towards that position
-    private PVector cohesion (Boid self, ArrayList<Boid> boids) {
-        float neighbordist = 50;
+    private PVector cohesion (Boid self, ArrayList<Boid> boids, float neighbordist) {
         PVector sum = new PVector(0, 0);   // Start with empty vector to accumulate all positions
         int count = 0;
         
@@ -303,20 +341,6 @@ class SimpleDesireCalc implements IDesireCalculator {
         else {
             return new PVector(0, 0);
         }
-    }
-
-    // A method that calculates and applies a steering force towards a target
-    // STEER = DESIRED MINUS VELOCITY
-    private PVector seek(Boid self, PVector target) {
-        PVector desired = PVector.sub(target, self.position);  // A vector pointing from the position to the target
-        // Scale to maximum speed
-        desired.normalize();
-        desired.mult(self.maxspeed);
-
-        // Steering = Desired minus Velocity
-        PVector steer = PVector.sub(desired, self.velocity);
-        steer.limit(self.maxforce);  // Limit to maximum steering force
-        return steer;
     }
 }
 class UsVsThemDesireCalc extends SimpleDesireCalc {
@@ -338,6 +362,43 @@ class UsVsThemDesireCalc extends SimpleDesireCalc {
         return desiredForce.add(familyForce).sub(adversaryForce);
     }
 }
+class UsVsThemDesireCalcGoCenter extends UsVsThemDesireCalc {
+    float destinationX;
+    float destinationY;
+    PVector destination;
+
+    public UsVsThemDesireCalcGoCenter(Flock family, Flock adversaries, float destinationX, float destinationY) {
+        super(family, adversaries);
+
+        this.destinationX = destinationX;
+        this.destinationY = destinationY;
+
+        this.destination = new PVector(this.destinationX, this.destinationY);
+    }
+
+    public PVector calculateDesired(Boid self) {
+        // Weigth avoidance wandering force vs go to point force
+        float goFactor = goDestinationFactor(self);
+        float packFactor = 1.0f - goFactor;
+
+        PVector packForce = super.calculateDesired(self)
+                            .mult(packFactor);
+        PVector goDestinationForce = this.seek(self, this.destination)
+                            .mult(goFactor);
+        
+        return packForce.add(goDestinationForce);
+    }
+
+    private float goDestinationFactor(Boid self) {
+        float d = PVector.dist(self.position, this.destination);
+        
+        // TODO: maxD only works here if destination is center
+        float maxD = PVector.dist(new PVector(0, 0), this.destination);
+
+        print(d/maxD);
+        return d/maxD;
+    }
+}
 class WrapAroundBorderCalculator implements IBorderCalculator {
     public void calculateBorders(Boid self, float r) {
         if (self.position.x < -r) self.position.x = width+r;
@@ -346,7 +407,7 @@ class WrapAroundBorderCalculator implements IBorderCalculator {
         if (self.position.y > height+r) self.position.y = -r;
     }
 }
-  public void settings() {  size(200, 200); }
+  public void settings() {  size(500, 500); }
   static public void main(String[] passedArgs) {
     String[] appletArgs = new String[] { "politicians" };
     if (passedArgs != null) {

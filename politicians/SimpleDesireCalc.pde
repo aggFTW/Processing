@@ -13,8 +13,8 @@ class SimpleDesireCalc implements IDesireCalculator {
         PVector desiredForce = new PVector(0, 0);
 
         PVector sep = this.separate(self, boids);   // Separation
-        PVector ali = this.align(self, boids);      // Alignment
-        PVector coh = this.cohesion(self, boids);   // Cohesion
+        PVector ali = this.align(self, boids, 50);      // Alignment
+        PVector coh = this.cohesion(self, boids, 50);   // Cohesion
 
         // Arbitrarily weight these forces
         sep.mult(1.5);
@@ -27,6 +27,20 @@ class SimpleDesireCalc implements IDesireCalculator {
         desiredForce.add(coh);
 
         return desiredForce;
+    }
+
+    // A method that calculates and applies a steering force towards a target
+    // STEER = DESIRED MINUS VELOCITY
+    protected PVector seek(Boid self, PVector target) {
+        PVector desired = PVector.sub(target, self.position);  // A vector pointing from the position to the target
+        // Scale to maximum speed
+        desired.normalize();
+        desired.mult(self.maxspeed);
+
+        // Steering = Desired minus Velocity
+        PVector steer = PVector.sub(desired, self.velocity);
+        steer.limit(self.maxforce);  // Limit to maximum steering force
+        return steer;
     }
 
     // Separation
@@ -73,8 +87,7 @@ class SimpleDesireCalc implements IDesireCalculator {
 
     // Alignment
     // For every nearby boid in the system, calculate the average velocity
-    private PVector align (Boid self, ArrayList<Boid> boids) {
-        float neighbordist = 50;
+    private PVector align (Boid self, ArrayList<Boid> boids, float neighbordist) {
         PVector sum = new PVector(0, 0);
         int count = 0;
 
@@ -106,8 +119,7 @@ class SimpleDesireCalc implements IDesireCalculator {
 
     // Cohesion
     // For the average position (i.e. center) of all nearby boids, calculate steering vector towards that position
-    private PVector cohesion (Boid self, ArrayList<Boid> boids) {
-        float neighbordist = 50;
+    private PVector cohesion (Boid self, ArrayList<Boid> boids, float neighbordist) {
         PVector sum = new PVector(0, 0);   // Start with empty vector to accumulate all positions
         int count = 0;
         
@@ -126,19 +138,5 @@ class SimpleDesireCalc implements IDesireCalculator {
         else {
             return new PVector(0, 0);
         }
-    }
-
-    // A method that calculates and applies a steering force towards a target
-    // STEER = DESIRED MINUS VELOCITY
-    private PVector seek(Boid self, PVector target) {
-        PVector desired = PVector.sub(target, self.position);  // A vector pointing from the position to the target
-        // Scale to maximum speed
-        desired.normalize();
-        desired.mult(self.maxspeed);
-
-        // Steering = Desired minus Velocity
-        PVector steer = PVector.sub(desired, self.velocity);
-        steer.limit(self.maxforce);  // Limit to maximum steering force
-        return steer;
     }
 }
